@@ -4,7 +4,7 @@ Tool for converting Google Docs to PDF via Markdown. Along the way, it
 allows replacing variables in the document (indicated by
 `{{VARIABLE_NAME}}`) with values from another Google Doc.
 
-![Demo gif](https://github.com/gzinck/vox-sandbox/blob/main/demo.gif)
+![Demo gif](https://github.com/gzinck/gdoc2pdf/blob/main/demo.gif)
 
 ## Installation
 

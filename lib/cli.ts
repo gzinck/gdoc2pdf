@@ -1,14 +1,17 @@
 #!/usr/bin/env node
 
-const { writers, parseDocument } = require("google-docs-converter");
 const { program } = require("commander");
 const pkg = require("../package.json");
 import { authorize, getDoc } from "./docs";
 const clear = require("clear");
 const figlet = require("figlet");
 const chalk = require("chalk");
+import { OAuth2Client } from "googleapis-common";
 import { askDocs, DocsRequested } from "./inquirer";
-import { combineLatest, from } from "rxjs";
+import { toMarkdown, toValues, replaceVariables } from "./mdParser";
+import { writeFile } from "./fs";
+import { convertToPdf } from "./pdfConverter";
+import { combineLatest, from, of } from "rxjs";
 import { mergeMap, tap } from "rxjs/operators";
 
 program.version(pkg.version);
@@ -19,11 +22,7 @@ program
         "-v, --values <Google Docs URL>",
         "values to insert into the document, formatted with {{VARIABLE}} followed by the text"
     )
-    .option(
-        "-i, --interactive <true|false>",
-        "interactively ask for the required information",
-        "true"
-    );
+    .option("-o, --output <Path to PDF or MD File>");
 
 program.parse(process.argv);
 
@@ -33,20 +32,41 @@ clear();
 console.log(chalk.yellow(figlet.textSync("gdoc2pdf")));
 console.log();
 
-// If asked to go interactive, make the requests
 const options = program.opts();
 
-askDocs(options).subscribe((opts: DocsRequested) => {
-    authorize()
-        .pipe(
-            mergeMap(client =>
-                combineLatest([
-                    getDoc(opts.file, client),
-                    ...(opts.values ? [getDoc(opts.values, client)] : [])
-                ])
+askDocs(options)
+    .pipe(
+        // Get the documents requested
+        mergeMap((opts: DocsRequested) =>
+            authorize().pipe(
+                mergeMap((client: OAuth2Client) =>
+                    combineLatest([
+                        getDoc(opts.file, client),
+                        ...(opts.values ? [getDoc(opts.values, client)] : [])
+                    ])
+                ),
+                mergeMap((docs: {}[]) => {
+                    let result = "";
+                    if (docs.length === 2) {
+                        const md = toMarkdown(docs[0]);
+                        const vals = toValues(toMarkdown(docs[1]));
+                        result = replaceVariables(md, vals);
+                    } else {
+                        result = toMarkdown(docs[0]);
+                    }
+                    return of(result);
+                }),
+                mergeMap((result: string) => {
+                    if ((opts.output.match(/pdf$/g) || []).length > 0) {
+                        // Convert to PDF
+                        return convertToPdf(result);
+                    }
+                    return of(result);
+                }),
+                mergeMap(result => writeFile(opts.output, result))
             )
         )
-        .subscribe(next => {
-            console.log(next);
-        });
-});
+    )
+    .subscribe({
+        complete: () => console.log(chalk.yellow("File converted and saved!"))
+    });

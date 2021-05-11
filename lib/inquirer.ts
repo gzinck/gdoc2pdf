@@ -2,11 +2,12 @@ const inquirer = require("inquirer");
 import { Observable, from } from "rxjs";
 import { map, mergeMap } from "rxjs/operators";
 const open = require("open");
-import { docIdRegex } from "./constants";
+import { docIdRegex, outfileRegex } from "./constants";
 
 export interface DocsRequested {
     file: string;
     values: string | null;
+    output: string;
 }
 
 export const askDocs = (
@@ -16,7 +17,8 @@ export const askDocs = (
         {
             name: "file",
             type: "input",
-            message: "What file do want to convert to PDF?",
+            message: "What file do want to convert",
+            when: () => !docs.file,
             default: docs.file,
             validate: (val: string) => {
                 return (
@@ -28,7 +30,8 @@ export const askDocs = (
         {
             name: "values",
             type: "input",
-            message: "What file has values for variables in the PDF?",
+            message: "What file has values for variables in the doc?",
+            when: () => !docs.values,
             default: docs.values || "none",
             validate: (val: string) => {
                 return (
@@ -37,12 +40,26 @@ export const askDocs = (
                     "Please enter 'none' or a valid Google Docs URL"
                 );
             }
+        },
+        {
+            name: "output",
+            type: "input",
+            message: "What is the local path for the output file (.pdf or .md)?",
+            when: () => !docs.output,
+            default: docs.output || "output.pdf",
+            validate: (val: string) => {
+                return (
+                    (val.match(outfileRegex) || []).length > 0 ||
+                    "Please enter a valid path ending with .pdf or .md"
+                );
+            }
         }
     ];
     return from(inquirer.prompt(questions) as Promise<DocsRequested>).pipe(
-        map((docs: DocsRequested) => ({
-            ...docs,
-            values: docs.values === "none" ? null : docs.values
+        map((docsSelected: DocsRequested) => ({
+            ...docs, // for docs not questioned
+            ...docsSelected,
+            values: docsSelected.values === "none" ? null : docs.values
         }))
     );
 };

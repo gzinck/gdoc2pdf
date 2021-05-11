@@ -17,7 +17,7 @@ export const askDocs = (
         {
             name: "file",
             type: "input",
-            message: "What file do want to convert",
+            message: "What file do want to convert?",
             when: () => !docs.file,
             default: docs.file,
             validate: (val: string) => {
@@ -59,7 +59,7 @@ export const askDocs = (
         map((docsSelected: DocsRequested) => ({
             ...docs, // for docs not questioned
             ...docsSelected,
-            values: docsSelected.values === "none" ? null : docs.values
+            values: docsSelected.values === "none" ? null : docsSelected.values
         }))
     );
 };

@@ -15,9 +15,7 @@ interface Credentials {
     };
 }
 
-interface Tokens {
-    expiry_date: number;
-}
+interface Tokens {}
 
 interface TokenResponse {
     tokens: Tokens;
@@ -52,18 +50,18 @@ const generateNewToken = (client: OAuth2Client): Observable<Tokens> => {
         map((res: TokenResponse) => res.tokens),
         // Once we have the token, write it for future use
         mergeMap((tokens: Tokens) =>
-            concat(ffs.writeFile(TOKEN_PATH, JSON.stringify(tokens)), of(tokens))
+            concat(
+                ffs.writeFile(TOKEN_PATH, JSON.stringify(tokens)),
+                of(tokens)
+            )
         )
     );
 };
 
-const getToken = (client: OAuth2Client): Observable<Tokens> => {
+const getTokenFromDisk = (client: OAuth2Client): Observable<Tokens> => {
     return ffs.readFile(TOKEN_PATH).pipe(
         map((creds: string) => JSON.parse(creds)),
-        tap((creds: Tokens) => {
-            if (creds.expiry_date - Date.now() < 0) throw "Token expired";
-        }),
-        catchError(() => generateNewToken(client))
+        map(({ refresh_token }: { refresh_token }) => ({ refresh_token }))
     );
 };
 
@@ -75,11 +73,19 @@ const getClient = (creds: Credentials): Observable<OAuth2Client> => {
         redirect_uris[0]
     );
 
-    return getToken(client).pipe(
+    return getTokenFromDisk(client).pipe(
         map(token => {
             client.setCredentials(token);
             return client;
-        })
+        }),
+        catchError(() =>
+            generateNewToken(client).pipe(
+                map(token => {
+                    client.setCredentials(token);
+                    return client;
+                })
+            )
+        )
     );
 };
 

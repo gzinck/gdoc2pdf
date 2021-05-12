@@ -52,7 +52,7 @@ const generateNewToken = (client: OAuth2Client): Observable<Tokens> => {
         map((res: TokenResponse) => res.tokens),
         // Once we have the token, write it for future use
         mergeMap((tokens: Tokens) =>
-            concat(ffs.writeFile(TOKEN_PATH, tokens), of(tokens))
+            concat(ffs.writeFile(TOKEN_PATH, JSON.stringify(tokens)), of(tokens))
         )
     );
 };

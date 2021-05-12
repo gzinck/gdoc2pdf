@@ -44,7 +44,8 @@ export const askDocs = (
         {
             name: "output",
             type: "input",
-            message: "What is the local path for the output file (.pdf or .md)?",
+            message:
+                "What is the local path for the output file (.pdf or .md)?",
             when: () => !docs.output,
             default: docs.output || "output.pdf",
             validate: (val: string) => {
@@ -56,11 +57,14 @@ export const askDocs = (
         }
     ];
     return from(inquirer.prompt(questions) as Promise<DocsRequested>).pipe(
-        map((docsSelected: DocsRequested) => ({
-            ...docs, // for docs not questioned
-            ...docsSelected,
-            values: docsSelected.values === "none" ? null : docsSelected.values
-        }))
+        map((docsSelected: DocsRequested) => {
+            const values = docs.values ? docs.values : docsSelected.values;
+            return {
+                ...docs, // for docs not questioned
+                ...docsSelected,
+                values: values === "none" ? null : values
+            };
+        }),
     );
 };
 

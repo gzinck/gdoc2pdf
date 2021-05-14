@@ -1,7 +1,34 @@
-const { writers, parseDocument } = require("google-docs-converter");
+const { parseDocument } = require("google-docs-converter");
+const { MarkdownWriterWithTags } = require("./writers");
 
-export const toMarkdown = (doc: any): string => {
-    return parseDocument(doc.data, new writers.MarkdownWriter());
+export const toMarkdown = (doc: any, strikes?: boolean): string => {
+    const regexClosingTooLate = /(\n+)(<\/[suib]>)/g;
+    const regexHeaderSpace = /\n\n#([^\n]*)\n\n/g;
+    const regexEmptyHeader = /\n(#+)(\s*)\n/g;
+    const regexEmptyLink = /\[ \]\(.*\)/g;
+    const regexIndent = /^ +(\S)/gm
+    const regexEmptyLine = /^ $/gm
+    const regexSpaces = /\w ( +)\w/g
+    const regexLineEnd = /$/gm;
+    return (
+        parseDocument(doc.data, new MarkdownWriterWithTags(strikes))
+            // Fix problems where <s> and <u> close after a line break
+            .replaceAll(regexClosingTooLate, "$2$1")
+            // Remove the inserted lines around headers
+            .replaceAll(regexHeaderSpace, "\n#$1\n")
+            // Remove empty headers
+            .replaceAll(regexEmptyHeader, "")
+            // Remove empty links
+            .replaceAll(regexEmptyLink, "")
+            // Remove indents
+            .replaceAll(regexIndent, "$1")
+            // Add empty lines
+            .replaceAll(regexEmptyLine, "<br />")
+            // Add empty spaces
+            .replaceAll(regexSpaces, spaces => spaces[0] + ' ' + '&nbsp;'.repeat(spaces.length - 3) + spaces[spaces.length - 1])
+            // Turn end of line into a new line
+            .replaceAll(regexLineEnd, "\n")
+    );
 };
 
 export const toValues = (md: string): Record<string, string> => {

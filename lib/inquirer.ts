@@ -4,15 +4,16 @@ import { map, mergeMap } from "rxjs/operators";
 const open = require("open");
 import { docIdRegex, outfileRegex } from "./constants";
 
-export interface DocsRequested {
+export interface Request {
     file: string;
     values: string | null;
     output: string;
+    strikes?: "yes" | "no";
 }
 
 export const askDocs = (
-    docs: Partial<DocsRequested>
-): Observable<DocsRequested> => {
+    docs: Partial<Request>
+): Observable<Request> => {
     const questions = [
         {
             name: "file",
@@ -54,14 +55,24 @@ export const askDocs = (
                     "Please enter a valid path ending with .pdf or .md"
                 );
             }
+        },
+        {
+            name: "strikes",
+            type: "list",
+            message:
+                "Do you want strikethrough text to be visible?",
+            when: () => docs.strikes === undefined,
+            default: docs.strikes || false,
+            choices: ["yes", "no"]
         }
     ];
-    return from(inquirer.prompt(questions) as Promise<DocsRequested>).pipe(
-        map((docsSelected: DocsRequested) => {
+    return from(inquirer.prompt(questions) as Promise<Request>).pipe(
+        map((docsSelected: Request) => {
             const values = docs.values ? docs.values : docsSelected.values;
             return {
                 ...docs, // for docs not questioned
                 ...docsSelected,
+                strikes: docs.strikes || docsSelected.strikes,
                 values: values === "none" ? null : values
             };
         }),

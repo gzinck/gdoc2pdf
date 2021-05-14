@@ -7,7 +7,7 @@ const clear = require("clear");
 const figlet = require("figlet");
 const chalk = require("chalk");
 import { OAuth2Client } from "googleapis-common";
-import { askDocs, DocsRequested } from "./inquirer";
+import { askDocs, Request } from "./inquirer";
 import { toMarkdown, toValues, replaceVariables } from "./mdParser";
 import { writeFile } from "./fs";
 import { convertToPdf } from "./pdfConverter";
@@ -22,7 +22,8 @@ program
         "-v, --values <Google Docs URL>",
         "values to insert into the document, formatted with {{VARIABLE}} followed by the text"
     )
-    .option("-o, --output <Path to PDF or MD File>");
+    .option("-o, --output <Path to PDF or MD File>")
+    .option("-s, --strikes <yes|no>", "whether to include strikethrough text");
 
 program.parse(process.argv);
 
@@ -37,7 +38,7 @@ const options = program.opts();
 askDocs(options)
     .pipe(
         // Get the documents requested
-        mergeMap((opts: DocsRequested) =>
+        mergeMap((opts: Request) =>
             authorize().pipe(
                 mergeMap((client: OAuth2Client) =>
                     combineLatest([
@@ -48,11 +49,11 @@ askDocs(options)
                 mergeMap((docs: {}[]) => {
                     let result = "";
                     if (docs.length === 2) {
-                        const md = toMarkdown(docs[0]);
+                        const md = toMarkdown(docs[0], opts.strikes === "yes");
                         const vals = toValues(toMarkdown(docs[1]));
                         result = replaceVariables(md, vals);
                     } else {
-                        result = toMarkdown(docs[0]);
+                        result = toMarkdown(docs[0], opts.strikes === "yes");
                     }
                     return of(result);
                 }),

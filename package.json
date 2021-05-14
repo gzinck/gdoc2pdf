@@ -21,6 +21,9 @@
         "src/**/*.ts": [
             "prettier --write",
             "eslint --fix"
+        ],
+        "*.{css,md}": [
+            "prettier --write"
         ]
     },
     "keywords": [

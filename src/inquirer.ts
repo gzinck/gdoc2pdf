@@ -9,12 +9,14 @@ interface FlagValues {
     values: string;
     output: string;
     strikes: string;
+    stylesheet: string;
 }
 
 export interface Settings {
     file: string;
     values?: string;
     output: string;
+    stylesheet?: string;
     strikes?: boolean;
 }
 
@@ -64,6 +66,20 @@ export const getSettings = (
             },
         },
         {
+            name: 'stylesheet',
+            type: 'input',
+            message: 'What stylesheet do you want to use (.css)?',
+            when: () => vals.stylesheet === undefined,
+            default: 'default',
+            validate: (val: string) => {
+                return (
+                    (val.match(/\.css$/g) || []).length > 0 ||
+                    val === 'default' ||
+                    'Please enter a valid path ending with .pdf or .md'
+                );
+            },
+        },
+        {
             name: 'strikes',
             type: 'list',
             message: 'Do you want strikethrough text to be visible?',
@@ -74,11 +90,13 @@ export const getSettings = (
     ];
     return from(inquirer.prompt(questions) as Promise<FlagValues>).pipe(
         map((valsSelected: FlagValues) => {
-            const values = vals.values ? vals.values : valsSelected.values;
+            const values = vals.values || valsSelected.values;
+            const stylesheet = vals.stylesheet || valsSelected.stylesheet;
             return {
                 file: vals.file || valsSelected.file,
                 values: values === 'none' ? undefined : values,
                 output: vals.output || valsSelected.output,
+                stylesheet: stylesheet === 'default' ? undefined : stylesheet,
                 strikes: (vals.strikes || valsSelected.strikes) === 'yes',
             };
         })

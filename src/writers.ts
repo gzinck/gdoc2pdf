@@ -13,17 +13,20 @@ export class MarkdownWriterWithTags extends MarkdownWriter {
     }
 
     italicize(text: string): string {
+        if (text.length === 0) return '';
         if (text.match(regexWhitespace)) return ' ';
         return `<i>${text}</i>`;
     }
 
     bold(text: string): string {
+        if (text.length === 0) return '';
         if (text.match(regexWhitespace)) return ' ';
         return `<b>${text}</b>`;
     }
 
     strikethrough(text: string): string {
-        if (!this.strikes || text.match(regexWhitespace)) return ' ';
+        if (!this.strikes || text.length === 0) return '';
+        if (text.match(regexWhitespace)) return ' ';
         return `<s>${text}</s>`;
     }
 }

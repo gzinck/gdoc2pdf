@@ -21,6 +21,10 @@ program
         'values to insert into the document, formatted with {{VARIABLE}} followed by the text'
     )
     .option('-o, --output <Path to PDF or MD File>')
+    .option(
+        '-c, --stylesheet <default|path_to_css_file>',
+        'the css stylesheet for the PDF'
+    )
     .option('-s, --strikes <yes|no>', 'whether to include strikethrough text');
 
 program.parse(process.argv);
@@ -58,7 +62,7 @@ getSettings(options)
                 mergeMap((result: string) => {
                     if ((opts.output.match(/pdf$/g) || []).length > 0) {
                         // Convert to PDF
-                        return convertToPdf(result);
+                        return convertToPdf(result, opts.stylesheet);
                     }
                     return of(result);
                 }),

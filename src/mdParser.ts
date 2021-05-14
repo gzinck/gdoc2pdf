@@ -8,39 +8,48 @@ export const toMarkdown = (
     strikes?: boolean
 ): string => {
     const regexClosingTooLate = /(\n+)(<\/[suib]>)/g;
-    const regexHeaderSpace = /\n\n#([^\n]*)\n\n/g;
-    const regexEmptyHeader = /\n(#+)(\s*)\n/g;
-    const regexEmptyLink = /\[ \]\(.*\)/g;
+    const regexHeaderAbove = /^\s*\n#/gm;
+    const regexHeaderBelow = /^#([^\n]*)\n\n/gm;
+    const regexEmptyHeader = /\n(#+)([ \t]*)\n/g;
+    const regexEmptyLink = /\[\s*\]\(.*\)/g;
     const regexIndent = /^ +(\S)/gm;
     const regexEmptyLine = /^ $/gm;
     const regexSpaces = /\w ( +)\w/g;
     const regexLineEnd = /$/gm;
-    return (
-        (parseDocument(doc, new MarkdownWriterWithTags(strikes)) as string)
-            // Fix problems where <s> and <u> close after a line break
-            .replaceAll(regexClosingTooLate, '$2$1')
-            // Remove the inserted lines around headers
-            .replaceAll(regexHeaderSpace, '\n#$1\n')
-            // Remove empty headers
-            .replaceAll(regexEmptyHeader, '')
-            // Remove empty links
-            .replaceAll(regexEmptyLink, '')
-            // Remove indents
-            .replaceAll(regexIndent, '$1')
-            // Add empty lines
-            .replaceAll(regexEmptyLine, '<br />')
-            // Add empty spaces
-            .replaceAll(
-                regexSpaces,
-                (spaces: string) =>
-                    spaces[0] +
-                    ' ' +
-                    '&nbsp;'.repeat(spaces.length - 3) +
-                    spaces[spaces.length - 1]
-            )
-            // Turn end of line into a new line
-            .replaceAll(regexLineEnd, '\n')
-    );
+    const regexCheckbox = /^- \[ ?\]([^\n]*)/gm;
+    const md = (
+        parseDocument(doc, new MarkdownWriterWithTags(strikes)) as string
+    )
+        // Fix problems where <s> and <u> close after a line break
+        .replaceAll(regexClosingTooLate, '$2$1')
+        // Remove the inserted lines around headers
+        .replaceAll(regexHeaderAbove, '#')
+        .replaceAll(regexHeaderBelow, '#$1\n')
+        // Remove empty headers
+        .replaceAll(regexEmptyHeader, '\n')
+        // Remove empty links
+        .replaceAll(regexEmptyLink, '')
+        // Remove indents
+        .replaceAll(regexIndent, '$1')
+        // Add empty lines (i.e., lines with a single space)
+        .replaceAll(regexEmptyLine, '<br />')
+        // Add empty spaces
+        .replaceAll(
+            regexSpaces,
+            (spaces: string) =>
+                spaces[0] +
+                ' ' +
+                '&nbsp;'.repeat(spaces.length - 3) +
+                spaces[spaces.length - 1]
+        )
+        // Turn end of line into a new line
+        .replaceAll(regexLineEnd, '\n')
+        // Add checkbox support
+        .replaceAll(
+            regexCheckbox,
+            '<div class="check-item"><input type="checkbox">$1</div>'
+        );
+    return md;
 };
 
 export const toValues = (md: string): Record<string, string> => {
@@ -81,7 +90,10 @@ export const replaceVariables = (
     vars.forEach((v) => {
         const vName = v.substring(2, v.length - 2);
         if (vals[vName]) {
-            revisedMd = revisedMd.replace(new RegExp(v), vals[vName]);
+            revisedMd = revisedMd.replace(
+                new RegExp(v),
+                `<span class="inserted-text">${vals[vName]}</span>`
+            );
         }
     });
     return revisedMd;

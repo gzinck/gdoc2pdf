@@ -41,14 +41,14 @@ To convert a Google Doc to PDF or Markdown, you can do this out of the box by ru
 1. At the prompt, input the URL of the google doc, like `https://docs.google.com/document/d/{{DOCUMENT_ID}}/edit`.
 2. At the next prompt, simply hit enter.
 3. Type in the URL of the file to output.
-4. Select "yes" (or "no" if you want to hide strikethrough text)
+4. Press enter to use the default stylesheet.
+5. Select "yes" (or "no" if you want to hide strikethrough text)
 
 To do this quickly, you can set the flags:
 
 ```
-gdoc2pdf -f <GOOGLE_DOC_URL> -v none -o output.pdf -s yes
+gdoc2pdf -f <GOOGLE_DOC_URL> -v none -o output.pdf -c default -s yes
 ```
-
 
 ## Adding in variables
 
@@ -82,11 +82,11 @@ Now, use the URL of the secondary doc when prompted with "What file has values f
 To do this quickly, you can set the flags:
 
 ```
-gdoc2pdf -f <GOOGLE_DOC_URL> -v <SECONDARY_GOOGLE_DOC_URL> -o output.pdf -s yes
+gdoc2pdf -f <GOOGLE_DOC_URL> -v <SECONDARY_GOOGLE_DOC_URL> -o output.pdf -c default -s yes
 ```
 
 ## Support notes
 
-- Does not support tables
-- Only one line will ever be placed between two lines of text. To add more lines,
-enter a new line with only a single space.
+-   Does not support tables
+-   Only one line will ever be placed between two lines of text. To add more lines,
+    enter a new line with only a single space.

@@ -2,17 +2,19 @@
     "name": "gdoc2pdf",
     "version": "1.0.0",
     "description": "Tool to convert google docs to PDF and insert variables in the doc",
-    "main": "dist/index.js",
-    "types": "dist/index.d.ts",
+    "main": "build/index.js",
+    "types": "build/index.d.ts",
     "files": [
-        "/dist"
+        "/build"
     ],
     "bin": {
-        "gdoc2pdf": "./dist/cli.js"
+        "gdoc2pdf": "./build/cli.js"
     },
     "scripts": {
         "build": "tsc",
-        "test": "echo \"Error: no test specified\" && exit 1"
+        "test": "echo \"Error: no test specified\" && exit 1",
+        "lint": "prettier --check 'src/**/*.ts' && eslint 'src/**/*.ts'",
+        "lint:fix": "prettier --write 'src/**/*.ts' && eslint --fix 'src/**/*.ts'"
     },
     "keywords": [
         "google",
@@ -24,22 +26,26 @@
     "author": "Graeme Zinck (https://graemezinck.ca)",
     "license": "MIT",
     "devDependencies": {
-        "@types/node": "^15.0.2",
+        "@types/clear": "^0.1.1",
+        "@types/figlet": "^1.5.1",
+        "@types/inquirer": "^7.3.1",
+        "@types/node": "^15.0.3",
         "@typescript-eslint/eslint-plugin": "^4.22.1",
         "@typescript-eslint/parser": "^4.22.1",
         "eslint": "^7.26.0",
-        "eslint-config-google": "^0.14.0"
+        "prettier": "^2.3.0",
+        "typescript": "^4.2.4"
     },
     "dependencies": {
-        "@googleapis/docs": "^0.2.0",
         "chalk": "^4.1.1",
         "clear": "^0.1.0",
         "commander": "^5.1.0",
         "figlet": "^1.5.0",
         "google-docs-converter": "^1.2.3",
+        "googleapis": "^49.0.0",
         "inquirer": "^8.0.0",
         "md-to-pdf": "^3.3.2",
         "open": "^8.0.8",
-        "rxjs": "^7.0.0"
+        "rxjs": "^6.6.7"
     }
 }

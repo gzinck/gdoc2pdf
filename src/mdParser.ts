@@ -82,7 +82,7 @@ export const replaceVariables = (
     md: string,
     vals: Record<string, string>
 ): string => {
-    const regexVar = /{{.*}}/g;
+    const regexVar = /{{\S+}}/g;
     const vars = md.match(regexVar);
     if (!vars || vars.length === 0) return md;
 

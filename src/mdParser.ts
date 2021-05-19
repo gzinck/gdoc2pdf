@@ -98,3 +98,39 @@ export const replaceVariables = (
     });
     return revisedMd;
 };
+
+const regexSentenceEnd = /([.?!-]) ([A-Z])/g;
+
+const removeSpacing = (md: string): string => {
+    const regexSpacing = /(^\s+)|(\s+$)/g;
+    return md.replaceAll(regexSpacing, '');
+};
+
+export const toSentenceSet = (md: string): Set<string> => {
+    const revisedMd = md.replaceAll(regexSentenceEnd, '$1\n$2');
+    const sentences = revisedMd.split('\n').map((s) => removeSpacing(s));
+
+    return new Set(sentences);
+};
+
+export const highlightNew = (md: string, old: Set<string>): string => {
+    const regexClosingSpan = /(\s+)<\/span>/g;
+    const delimiter = '\\sentenceend\\';
+    const delimitedMd = md
+        .replaceAll(regexSentenceEnd, `$1 ${delimiter}$2`)
+        .replaceAll('\n', `${delimiter}\n${delimiter}`);
+
+    const segments = delimitedMd.split(delimiter);
+
+    return segments
+        .map((sentence) =>
+            old.has(removeSpacing(sentence)) ||
+            sentence === '\n' ||
+            sentence === '- ' ||
+            sentence[0] === '#'
+                ? sentence
+                : `<span class="new-text">${sentence}</span>`
+        )
+        .join('')
+        .replaceAll(regexClosingSpan, '</span>$1');
+};

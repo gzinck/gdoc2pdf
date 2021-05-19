@@ -1,4 +1,5 @@
-.inserted-text {
+.inserted-text,
+.new-text {
     background-color: #fdf3d0;
 }
 

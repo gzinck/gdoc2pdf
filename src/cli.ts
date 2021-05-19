@@ -1,13 +1,19 @@
 #!/usr/bin/env node
 
 import { program } from 'commander';
-import { authorize, getDoc } from './docs';
+import { getDoc } from './docs';
 import clear from 'clear';
 import figlet from 'figlet';
 import chalk from 'chalk';
 import { OAuth2Client } from 'google-auth-library';
 import { getSettings, Settings } from './inquirer';
-import { toMarkdown, toValues, replaceVariables } from './mdParser';
+import {
+    toMarkdown,
+    toValues,
+    replaceVariables,
+    toSentenceSet,
+    highlightNew,
+} from './mdParser';
 import { writeFile } from './fs';
 import { convertToPdf } from './pdfConverter';
 import { combineLatest, of } from 'rxjs';
@@ -19,6 +25,10 @@ program
     .option(
         '-v, --values <Google Docs URL>',
         'values to insert into the document, formatted with {{VARIABLE}} followed by the text'
+    )
+    .option(
+        '-t, --template <Google Docs URL>',
+        'template Google Doc with text not to highlight'
     )
     .option('-o, --output <Path to PDF or MD File>')
     .option(
@@ -41,22 +51,27 @@ getSettings(options)
     .pipe(
         // Get the documents requested
         mergeMap((opts: Settings) =>
-            authorize().pipe(
-                mergeMap((client: OAuth2Client) =>
-                    combineLatest([
-                        getDoc(opts.file, client),
-                        ...(opts.values ? [getDoc(opts.values, client)] : []),
-                    ])
-                ),
-                mergeMap((docs) => {
-                    let result: string;
-                    if (docs.length === 2) {
-                        const md = toMarkdown(docs[0], opts.strikes);
-                        const vals = toValues(toMarkdown(docs[1]));
-                        result = replaceVariables(md, vals);
-                    } else {
-                        result = toMarkdown(docs[0], opts.strikes);
+            getDoc(opts.file).pipe(
+                // Get the first file to make sure credentials are OK, then go ahead with the others
+                mergeMap((file) => {
+                    return combineLatest([
+                        of(file),
+                        opts.values ? getDoc(opts.values) : of(undefined),
+                        opts.template ? getDoc(opts.template) : of(undefined),
+                    ]);
+                }),
+                mergeMap(([file, values, template]) => {
+                    let result = toMarkdown(file, opts.strikes);
+                    if (template) {
+                        const sentenceSet = toSentenceSet(toMarkdown(template));
+                        result = highlightNew(result, sentenceSet);
                     }
+
+                    if (values) {
+                        const vals = toValues(toMarkdown(values));
+                        result = replaceVariables(result, vals);
+                    }
+
                     return of(result);
                 }),
                 mergeMap((result: string) => {

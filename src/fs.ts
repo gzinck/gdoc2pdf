@@ -22,3 +22,15 @@ export const writeFile = (
         });
     });
 };
+
+export const deleteFile = (name: string): Observable<boolean> => {
+    return new Observable<boolean>((sub) => {
+        ffs.unlink(name, (err) => {
+            if (err) {
+                sub.error(err);
+                sub.next(false);
+            } else sub.next(true);
+            sub.complete();
+        });
+    });
+};

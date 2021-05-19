@@ -1,5 +1,5 @@
 import inquirer from 'inquirer';
-import { Observable, from } from 'rxjs';
+import { Observable, from, of } from 'rxjs';
 import { map, mergeMap } from 'rxjs/operators';
 import open from 'open';
 import { docIdRegex, outfileRegex } from './constants';
@@ -7,6 +7,7 @@ import { docIdRegex, outfileRegex } from './constants';
 interface FlagValues {
     file: string;
     values: string;
+    template: string;
     output: string;
     strikes: string;
     stylesheet: string;
@@ -15,6 +16,7 @@ interface FlagValues {
 export interface Settings {
     file: string;
     values?: string;
+    template?: string;
     output: string;
     stylesheet?: string;
     strikes?: boolean;
@@ -42,6 +44,20 @@ export const getSettings = (
             type: 'input',
             message: 'What file has values for variables in the doc?',
             when: () => !vals.values,
+            default: 'none',
+            validate: (val: string) => {
+                return (
+                    val === 'none' ||
+                    (val.match(docIdRegex) || []).length >= 2 ||
+                    "Please enter 'none' or a valid Google vals URL"
+                );
+            },
+        },
+        {
+            name: 'template',
+            type: 'input',
+            message: 'What file has the template doc?',
+            when: () => !vals.template,
             default: 'none',
             validate: (val: string) => {
                 return (
@@ -84,17 +100,26 @@ export const getSettings = (
             type: 'list',
             message: 'Do you want strikethrough text to be visible?',
             when: () => vals.strikes === undefined,
-            default: false,
+            default: 'no',
             choices: ['yes', 'no'],
         },
     ];
-    return from(inquirer.prompt(questions) as Promise<FlagValues>).pipe(
+
+    // Only show prompts if we're missing the file and output
+    const answers$ =
+        vals.file && vals.output
+            ? of(vals as FlagValues)
+            : from(inquirer.prompt(questions) as Promise<FlagValues>);
+
+    return answers$.pipe(
         map((valsSelected: FlagValues) => {
             const values = vals.values || valsSelected.values;
+            const template = vals.template || valsSelected.template;
             const stylesheet = vals.stylesheet || valsSelected.stylesheet;
             return {
                 file: vals.file || valsSelected.file,
                 values: values === 'none' ? undefined : values,
+                template: template === 'none' ? undefined : template,
                 output: vals.output || valsSelected.output,
                 stylesheet: stylesheet === 'default' ? undefined : stylesheet,
                 strikes: (vals.strikes || valsSelected.strikes) === 'yes',

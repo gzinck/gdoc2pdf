@@ -1,8 +1,9 @@
 import { google, docs_v1 } from 'googleapis';
 import { OAuth2Client, Credentials } from 'google-auth-library';
-import { readFile, writeFile } from './fs';
+import { deleteFile, readFile, writeFile } from './fs';
 import { homedir } from 'os';
 import { EMPTY, Observable, of, from, concat } from 'rxjs';
+import { GaxiosError } from 'gaxios';
 import { map, mergeMap, catchError } from 'rxjs/operators';
 import { askGoogleCode, GoogleCode } from './inquirer';
 import { docIdRegex } from './constants';
@@ -78,32 +79,42 @@ const getClient = (creds: AppCreds): Observable<OAuth2Client> => {
     );
 };
 
-export const authorize = (): Observable<OAuth2Client> => {
+const authorize = (): Observable<OAuth2Client> => {
     return getCredentialsFromDisk().pipe(
         mergeMap((creds: AppCreds) => getClient(creds))
     );
 };
 
+// rxjs operator to get a doc from a client
+const getDocWithClient = (documentId: string) =>
+    mergeMap((client: OAuth2Client) => {
+        const gdocs = google.docs({
+            version: 'v1',
+            auth: client,
+        });
+        return gdocs.documents.get({ documentId });
+    });
+
 //***********************
 //     Opening docs
 //***********************
-export const getDoc = (
-    url: string,
-    client: OAuth2Client
-): Observable<docs_v1.Schema$Document> => {
+export const getDoc = (url: string): Observable<docs_v1.Schema$Document> => {
     const matches = url.match(docIdRegex);
     if (!matches || matches.length < 2)
         throw `Error: could not find document id in ${url}`;
     const documentId = matches[1];
-    const gdocs = google.docs({
-        version: 'v1',
-        auth: client,
-    });
-    return from(gdocs.documents.get({ documentId })).pipe(
-        map(({ data }) => data),
-        catchError((err) => {
-            console.log('Error in docs API:', err);
-            return EMPTY;
-        })
+    return authorize().pipe(
+        getDocWithClient(documentId),
+        catchError((err: GaxiosError) => {
+            if (err.response && err.response.data.error === 'invalid_grant') {
+                // Clear out the client credentials
+                console.log('Requesting a new token since old one expired...');
+                return deleteFile(TOKEN_PATH).pipe(
+                    mergeMap(() => authorize()),
+                    getDocWithClient(documentId)
+                );
+            } else throw err;
+        }),
+        map(({ data }) => data)
     );
 };

@@ -83,8 +83,21 @@ export const replaceVariables = (
     vals: Record<string, string>
 ): string => {
     const regexVar = /{{\S+}}/g;
+    const regexBullet = /\n\s*- (\[\s*\] )?/g;
+
     const vars = md.match(regexVar);
     if (!vars || vars.length === 0) return md;
+
+    const highlightedVals: Record<string, string> = Object.entries(vals).reduce(
+        (prv, [key, val]) => ({
+            ...prv,
+            [key]: `<span class="inserted-text">${val.replaceAll(
+                regexBullet,
+                (bullet) => `</span>${bullet}<span class="inserted-text">`
+            )}</span>`,
+        }),
+        {}
+    );
 
     let revisedMd = md;
     vars.forEach((v) => {
@@ -92,7 +105,7 @@ export const replaceVariables = (
         if (vals[vName]) {
             revisedMd = revisedMd.replace(
                 new RegExp(v),
-                `<span class="inserted-text">${vals[vName]}</span>`
+                highlightedVals[vName]
             );
         }
     });

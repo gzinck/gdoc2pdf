@@ -102,7 +102,7 @@ export const replaceVariables = (
     let revisedMd = md;
     vars.forEach((v) => {
         const vName = v.substring(2, v.length - 2);
-        if (vals[vName]) {
+        if (vals[vName] !== undefined) {
             revisedMd = revisedMd.replace(
                 new RegExp(v),
                 highlightedVals[vName]

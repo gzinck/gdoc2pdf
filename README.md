@@ -8,12 +8,8 @@ values from another Google Doc.
 
 ## Installation
 
-Before installing, you'll need credentials to run the application in a specific
-folder on your computer:
-
-```
-<HOME_DIRECTORY>/.config/gdoc2pdf/credentials.json
-```
+Before installing, you'll need credentials to run the application. These
+credentials need to be stored in the file `~/.config/gdoc2pdf/credentials.json`.
 
 To obtain this file, use the instructions
 [from Google](https://developers.google.com/workspace/guides/create-credentials)
@@ -115,5 +111,8 @@ options.
 ## Support notes
 
 -   Does not support tables
+-   Does not support images
+-   The conversion strips out all formatting except bold, italic, heading,
+    strikethroughs, and lists.
 -   Only one line will ever be placed between two lines of text. To add more
     lines, enter a new line with only a single space.

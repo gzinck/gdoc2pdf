@@ -21,7 +21,7 @@ and create credentials for a desktop app. Once downloaded, copy them in the
 appropriate folder:
 
 ```
-mkdir -p ~/.config/gdoc2pdf/credentials.json
+mkdir -p ~/.config/gdoc2pdf
 mv ~/Downloads/client_secret_<STUFF>_apps.googleusercontent.com.json ~/.config/gdoc2pdf/credentials.json
 ```
 

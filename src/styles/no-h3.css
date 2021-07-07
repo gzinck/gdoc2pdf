@@ -14,7 +14,6 @@
 
 * {
     font-family: 'Calibri';
-    font-size: 14px;
 }
 
 h1 {
@@ -33,4 +32,9 @@ h4,
 h5,
 h6 {
     font-size: 15px;
+}
+
+p,
+li {
+    font-size: 14px;
 }

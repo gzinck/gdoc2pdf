@@ -8,6 +8,9 @@ values from another Google Doc.
 
 ## Installation
 
+First, make sure you have a **recent version of `node` installed**. It works on
+node `v15.0.1` but may not work on older versions.
+
 Before installing, you'll need credentials to run the application. These
 credentials need to be stored in the file `~/.config/gdoc2pdf/credentials.json`.
 

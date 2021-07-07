@@ -83,7 +83,8 @@ export const replaceVariables = (
     vals: Record<string, string>
 ): string => {
     const regexVar = /{{\S+}}/g;
-    const regexBullet = /\n\s*- (\[\s*\] )?/g;
+    // A bullet or a space
+    const regexBullet = /\n\s*(- )?(\[\s*\] )?/g;
 
     const vars = md.match(regexVar);
     if (!vars || vars.length === 0) return md;
